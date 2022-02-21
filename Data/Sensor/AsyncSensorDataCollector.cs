@@ -25,7 +25,7 @@ public class AsyncSensorDataCollector<T>
 
     public void Start() => _collectorTask = RunInternalAsync(_cts.Token);
 
-    public void Stop() 
+    public void Stop()
     {
         _cts.Cancel();
         _collectorTask?.Wait(3000);
@@ -34,12 +34,13 @@ public class AsyncSensorDataCollector<T>
 
     private Task RunInternalAsync(CancellationToken cancellationToken)
     {
-        if (_collectorTask?.Status == TaskStatus.Running) 
+        if (_collectorTask?.Status == TaskStatus.Running)
         {
             throw new InvalidOperationException("Cannot start twice.");
         }
 
-        return Task.Run(async () => {
+        return Task.Run(async () =>
+        {
             while (!cancellationToken.IsCancellationRequested)
             {
                 try

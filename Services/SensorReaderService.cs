@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using WashingIot.Data;
 
 namespace WashingIot.Services;
