@@ -17,4 +17,4 @@ class Adxl345DataSource : ISensorDataSource<Adxl345Reading>
     }
 }
 
-record Adxl345Reading(float X, float Y, float Z);
+public record Adxl345Reading(float X, float Y, float Z);

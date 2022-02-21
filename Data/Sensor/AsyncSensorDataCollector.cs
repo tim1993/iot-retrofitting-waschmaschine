@@ -1,20 +1,26 @@
+using Microsoft.Extensions.Logging;
+
 namespace WashingIot.Data;
 
-class AsyncSensorDataCollector<T>
+public class AsyncSensorDataCollector<T>
 {
+    public IEnumerable<Reading<T>> Readings => _data.ToList();
+
     private readonly TimeSpan _samplingInterval;
     private readonly ISensorDataSource<T> _source;
 
     private readonly CancellationTokenSource _cts = new();
     private readonly int _maxItemCount;
+    private readonly ILogger? _logger;
     private Task? _collectorTask;
 
-    private List<(DateTimeOffset, T)> _data = new();
-    public AsyncSensorDataCollector(TimeSpan samplingInterval, ISensorDataSource<T> source, int maxItemCount = 16144)
+    private List<Reading<T>> _data = new();
+    public AsyncSensorDataCollector(TimeSpan samplingInterval, ISensorDataSource<T> source, ILogger? logger, int maxItemCount = 16144)
     {
         _samplingInterval = samplingInterval;
         _source = source;
         _maxItemCount = maxItemCount;
+        _logger = logger;
     }
 
     public void Start() => _collectorTask = RunInternalAsync(_cts.Token);
@@ -40,11 +46,11 @@ class AsyncSensorDataCollector<T>
                 {
                     var measurement = await _source.GetMeasurmentAsync();
                     Console.WriteLine(measurement);
-                    _data.Add((DateTime.UtcNow, measurement));
+                    _data.Add(new Reading<T>(DateTime.UtcNow, measurement));
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    _logger?.LogCritical(e, "Error occured:");
                 }
 
                 if (NeedsCleanup())
@@ -59,3 +65,5 @@ class AsyncSensorDataCollector<T>
 
     private bool NeedsCleanup() => _data.Count >= _maxItemCount;
 }
+
+public record Reading<T>(DateTimeOffset Timestamp, T Value);

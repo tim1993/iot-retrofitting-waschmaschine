@@ -1,6 +1,6 @@
 namespace WashingIot.Data;
 
-interface ISensorDataSource<T> 
+public interface ISensorDataSource<T> 
 {
     Task<T> GetMeasurmentAsync();
 }
