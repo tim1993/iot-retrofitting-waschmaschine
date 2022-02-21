@@ -1,0 +1,45 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/net6.0/washing-iot.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Remote Launch - Framework-dependent",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Publish SSH",
+            "program": "/usr/bin/dotnet/dotnet",
+            "args": [
+                "/home/pi/washing-iot/washing-iot.dll"
+            ],
+            "cwd": "~/washing-iot/",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "pipeTransport": {
+                "pipeCwd": "${workspaceRoot}",
+                "pipeProgram": "C:\\WINDOWS\\System32\\OpenSSH\\ssh.exe",
+                "pipeArgs": [
+                    "pi@192.168.0.249"
+                ],
+                "debuggerPath": "~/vsdbg/vsdbg"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}
