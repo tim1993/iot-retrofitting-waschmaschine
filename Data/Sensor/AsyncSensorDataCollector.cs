@@ -56,7 +56,7 @@ public class AsyncSensorDataCollector<T>
 
                 if (NeedsCleanup())
                 {
-                    _data.Clear();
+                    _data.RemoveAt(1);
                 }
 
                 await Task.Delay((int)_samplingInterval.TotalMilliseconds);
