@@ -10,16 +10,16 @@ public class AsyncSensorDataCollector<T>
     private readonly ISensorDataSource<T> _source;
 
     private readonly CancellationTokenSource _cts = new();
-    private readonly int _maxItemCount;
+    private readonly TimeSpan _maxAge;
     private readonly ILogger? _logger;
     private Task? _collectorTask;
 
     private List<Reading<T>> _data = new();
-    public AsyncSensorDataCollector(TimeSpan samplingInterval, ISensorDataSource<T> source, ILogger? logger, int maxItemCount = 16144)
+    public AsyncSensorDataCollector(TimeSpan samplingInterval, TimeSpan maxAge, ISensorDataSource<T> source, ILogger? logger)
     {
         _samplingInterval = samplingInterval;
         _source = source;
-        _maxItemCount = maxItemCount;
+        _maxAge = maxAge;
         _logger = logger;
     }
 
@@ -54,17 +54,28 @@ public class AsyncSensorDataCollector<T>
                     _logger?.LogCritical(e, "Error occured:");
                 }
 
-                if (NeedsCleanup())
-                {
-                    _data.RemoveAt(1);
-                }
+                HandleCleanUp();
 
                 await Task.Delay((int)_samplingInterval.TotalMilliseconds);
             }
         });
     }
 
-    private bool NeedsCleanup() => _data.Count >= _maxItemCount;
+    private IEnumerable<Reading<T>> GetEntriesForCleanup() => _data.Where(x => DateTime.UtcNow - x.Timestamp > _maxAge);
+
+    private void HandleCleanUp()
+    {
+        var cleanupCandidates = GetEntriesForCleanup();
+        if (cleanupCandidates.Any())
+        {
+            _logger?.LogInformation("Cleaning {count} from SensorDataCollector", cleanupCandidates.Count());
+            
+            foreach(var candidate in cleanupCandidates)
+            {
+                _data.Remove(candidate);
+            }
+        }
+    }
 }
 
 public record Reading<T>(DateTimeOffset Timestamp, T Value);

@@ -2,6 +2,8 @@
 using System.Timers;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using WashingIot.Configuration;
 using Timer = System.Timers.Timer;
 
 namespace WashingIot.Data;
@@ -11,14 +13,18 @@ public class AnalysisService: IHostedService
     private readonly Adx1345SensorDataCollector _sensorDataCollector;
     private readonly ILogger<AnalysisService> _logger;
     private Timer? _timer;
-    public AnalysisService(Adx1345SensorDataCollector sensorDataCollector, ILogger<AnalysisService> logger)
+
+    private VibrationMonitoringConfiguration _config;
+    public AnalysisService(Adx1345SensorDataCollector sensorDataCollector, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<AnalysisService> logger)
     {
         _sensorDataCollector = sensorDataCollector;
         _logger = logger;
+        _config = options.Value;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        
         _timer = new Timer(TimeSpan.FromSeconds(30).TotalMilliseconds);
         _timer.Elapsed += OnElapsed;
         _timer.AutoReset = true;
