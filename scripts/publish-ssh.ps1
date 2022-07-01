@@ -1,4 +1,4 @@
-$serverAddress = "pi@192.168.0.249"
+$serverAddress = "pi@washingiot"
 
 $path = (Get-Item "$PWD").FullName 
 $folderName = (Get-Item $path).Name

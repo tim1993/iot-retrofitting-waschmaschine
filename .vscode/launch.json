@@ -22,19 +22,20 @@
             "preLaunchTask": "Publish SSH",
             "program": "/usr/bin/dotnet/dotnet",
             "args": [
-                "/home/pi/washing-iot/washing-iot.dll"
+                "/home/pi/IoT.WashingMachine/washing-iot.dll"
             ],
-            "cwd": "~/washing-iot/",
+            "cwd": "~/IoT.WashingMachine/",
             "stopAtEntry": false,
             "console": "internalConsole",
             "pipeTransport": {
                 "pipeCwd": "${workspaceRoot}",
                 "pipeProgram": "C:\\WINDOWS\\System32\\OpenSSH\\ssh.exe",
                 "pipeArgs": [
-                    "pi@192.168.0.249"
+                    "pi@192.168.0.248"
                 ],
                 "debuggerPath": "~/vsdbg/vsdbg"
-            }
+            },
+            "requireExactSource": false
         },
         {
             "name": ".NET Core Attach",
