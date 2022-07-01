@@ -50,6 +50,7 @@ public class AsyncSensorDataCollector<T>
                 try
                 {
                     var measurement = await _source.GetMeasurmentAsync();
+                    _logger?.LogInformation("Received measurement: {measurement}", measurement?.ToString());
                     LogReading(measurement);
                     _data.Add(new Reading<T>(DateTime.UtcNow, measurement));
                 }

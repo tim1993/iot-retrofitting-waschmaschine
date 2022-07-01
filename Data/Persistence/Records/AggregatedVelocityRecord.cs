@@ -12,6 +12,6 @@ public class AggregatedVelocityRecordMap : ClassMap<AggregatedVelocityRecord>
         Map(m => m.Vx).Index(1).Name("vx");
         Map(m => m.Vy).Index(2).Name("vy");
         Map(m => m.Vz).Index(3).Name("vz");
-        Map(m => m.AggregatedV).Index(3).Name("aggregatedV");
+        Map(m => m.AggregatedV).Index(4).Name("aggregatedV");
     }
 }

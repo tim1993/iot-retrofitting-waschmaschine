@@ -7,24 +7,40 @@ public class CsvPersistenceService
 {
     private CsvWriter _accelerationWriter;
     private CsvWriter _aggregatedVelocityWriter;
+    private CsvWriter _activityWriter;
+
     public CsvPersistenceService()
     {
         _accelerationWriter = CreateAccelerationWriter();
         _aggregatedVelocityWriter = CreateAggregatedVelocityWriter();
+        _activityWriter = CreateActivityDetectionWriter();
     }
 
     public void Write(AccelerationRecord record)
-    {
-        _accelerationWriter.WriteRecord(record);
-        _accelerationWriter.NextRecord();
-        _accelerationWriter.Flush();
-    }
+        => WriteInternal(_accelerationWriter, record);
+
 
     public void Write(AggregatedVelocityRecord record)
+        => WriteInternal(_aggregatedVelocityWriter, record);
+
+    public void Write(ActivityDetectionRecord record)
+        => WriteInternal(_activityWriter, record);
+
+    private void WriteInternal<T>(CsvWriter writer, T record)
     {
-        _aggregatedVelocityWriter.WriteRecord(record);
-        _aggregatedVelocityWriter.NextRecord();
-        _aggregatedVelocityWriter.Flush();
+        writer.WriteRecord(record);
+        writer.NextRecord();
+        writer.Flush();
+    }
+
+    private CsvWriter CreateAccelerationWriter()
+    {
+        var writer = CreateWriter("acceleration.csv");
+        writer.Context.RegisterClassMap<AccelerationRecordMap>();
+        writer.WriteHeader<AccelerationRecord>();
+        writer.NextRecord();
+
+        return writer;
     }
 
     private CsvWriter CreateAggregatedVelocityWriter()
@@ -37,11 +53,11 @@ public class CsvPersistenceService
         return writer;
     }
 
-    private CsvWriter CreateAccelerationWriter()
+    private CsvWriter CreateActivityDetectionWriter()
     {
-        var writer = CreateWriter("acceleration.csv");
-        writer.Context.RegisterClassMap<AccelerationRecordMap>();
-        writer.WriteHeader<AccelerationRecord>();
+        var writer = CreateWriter("activity.csv");
+        writer.Context.RegisterClassMap<ActivityDetectionRecordMap>();
+        writer.WriteHeader<ActivityDetectionRecord>();
         writer.NextRecord();
 
         return writer;
