@@ -65,7 +65,7 @@ public class CsvPersistenceService
 
     private CsvWriter CreateWriter(string file)
     {
-        var streamWriter = new StreamWriter(File.Open(file, FileMode.Create));
+        var streamWriter = new StreamWriter(File.Open($"{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}_{file}", FileMode.Create));
         var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
 
         return csvWriter;

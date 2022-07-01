@@ -66,7 +66,7 @@ public class AsyncSensorDataCollector<T>
         });
     }
 
-    private IEnumerable<Reading<T>> GetEntriesForCleanup() => _data.Where(x => DateTime.UtcNow - x.Timestamp > _maxAge);
+    private IEnumerable<Reading<T>> GetEntriesForCleanup() => _data.Where(x => DateTime.UtcNow - x.Timestamp > _maxAge).ToArray();
 
     private void HandleCleanUp()
     {
