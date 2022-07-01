@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using WashingIot.Configuration;
 using WashingIot.Data;
+using WashingIot.Data.Persistence;
 using WashingIot.Services;
 
 public static class Startup
@@ -14,6 +15,7 @@ public static class Startup
     public static void ConfigureServices(IServiceCollection services, HostBuilderContext context)
     {
         services.AddSingleton<Adx1345SensorDataCollector>();
+        services.AddSingleton<CsvPersistenceService>();
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -28,9 +30,9 @@ public static class Startup
             }), GravityRange.Range02));
             services.AddSingleton<ISensorDataSource<Adxl345Reading>, Adxl345DataSource>();
         }
-
-        services.AddHostedService<SensorReaderService>();
-        services.AddHostedService<VelocityAggregationService>();
+        services.AddSingleton<SensorReaderService>().AddHostedService(sp => sp.GetRequiredService<SensorReaderService>());
+        services.AddSingleton<VelocityAggregationService>().AddHostedService(sp => sp.GetRequiredService<VelocityAggregationService>());
+        services.AddSingleton<ActivityDetectionService>().AddHostedService(sp => sp.GetRequiredService<ActivityDetectionService>());
 
         services.AddSingleton<DeviceClient>((sp) => DeviceClient.CreateFromConnectionString(sp.GetRequiredService<IOptionsSnapshot<ConnectionConfiguration>>().Value.IoTHubConnectionString));
 

@@ -61,8 +61,13 @@ public class VelocityAggregationService : IHostedService
         _logger.LogInformation("Analyzing entries of last interval.");
         var readings = _sensorDataCollector.Readings.OrderBy(x => x.Timestamp).ToList();
         var velocity = readings.Zip(readings.Skip(1)).Select(x => new { Vx = x.First.Value.X - x.Second.Value.X, Vy = x.First.Value.Y - x.Second.Value.Y, Vz = x.First.Value.Z - x.Second.Value.Z });
+
+        var avgVx = velocity.Average(x => Math.Abs(x.Vx));
+        var avgVy = velocity.Average(x => Math.Abs(x.Vy));
+        var avgVz = velocity.Average(x => Math.Abs(x.Vz));
+
         var combinedVelocity = velocity.Average(x => Math.Abs(x.Vx) + Math.Abs(x.Vy) + Math.Abs(x.Vz));
 
-        _cache.Add(new CacheItem(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), (DateTimeOffset.Now, combinedVelocity)), new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now + TimeSpan.FromMinutes(30) });
+        _cache.Add(new CacheItem(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), (DateTimeOffset.Now, combinedVelocity)), new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now + AnalysisConstants.ObservationPeriod });
     }
 }
