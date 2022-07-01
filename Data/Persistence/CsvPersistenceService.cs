@@ -16,11 +16,15 @@ public class CsvPersistenceService
     public void Write(AccelerationRecord record)
     {
         _accelerationWriter.WriteRecord(record);
+        _accelerationWriter.NextRecord();
+        _accelerationWriter.Flush();
     }
 
     public void Write(AggregatedVelocityRecord record)
     {
         _aggregatedVelocityWriter.WriteRecord(record);
+        _aggregatedVelocityWriter.NextRecord();
+        _aggregatedVelocityWriter.Flush();
     }
 
     private CsvWriter CreateAggregatedVelocityWriter()
@@ -28,6 +32,7 @@ public class CsvPersistenceService
         var writer = CreateWriter("velocity.csv");
         writer.Context.RegisterClassMap<AggregatedVelocityRecordMap>();
         writer.WriteHeader<AggregatedVelocityRecord>();
+        writer.NextRecord();
 
         return writer;
     }
@@ -37,6 +42,7 @@ public class CsvPersistenceService
         var writer = CreateWriter("acceleration.csv");
         writer.Context.RegisterClassMap<AccelerationRecordMap>();
         writer.WriteHeader<AccelerationRecord>();
+        writer.NextRecord();
 
         return writer;
     }

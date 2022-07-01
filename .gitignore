@@ -4,3 +4,4 @@ out/
 
 *.key
 appsettings.*.json
+*.csv

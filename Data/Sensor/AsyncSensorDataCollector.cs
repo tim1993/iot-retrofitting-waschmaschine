@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using WashingIot.Data.Persistence;
 
 namespace WashingIot.Data;
 
@@ -32,6 +33,9 @@ public class AsyncSensorDataCollector<T>
         _collectorTask?.Dispose();
     }
 
+    protected virtual void LogReading(T value)
+    { }
+
     private Task RunInternalAsync(CancellationToken cancellationToken)
     {
         if (_collectorTask?.Status == TaskStatus.Running)
@@ -46,7 +50,7 @@ public class AsyncSensorDataCollector<T>
                 try
                 {
                     var measurement = await _source.GetMeasurmentAsync();
-                    Console.WriteLine(measurement);
+                    LogReading(measurement);
                     _data.Add(new Reading<T>(DateTime.UtcNow, measurement));
                 }
                 catch (Exception e)
@@ -69,8 +73,8 @@ public class AsyncSensorDataCollector<T>
         if (cleanupCandidates.Any())
         {
             _logger?.LogInformation("Cleaning {count} from SensorDataCollector", cleanupCandidates.Count());
-            
-            foreach(var candidate in cleanupCandidates)
+
+            foreach (var candidate in cleanupCandidates)
             {
                 _data.Remove(candidate);
             }

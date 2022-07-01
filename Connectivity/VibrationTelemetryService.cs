@@ -26,9 +26,9 @@ public class VibrationTelemetryService : IHostedService
         return Task.CompletedTask;
     }
 
-    private async Task OnElapsedAsync()
+    private Task OnElapsedAsync()
     {
-
+        return Task.CompletedTask;
     }
 
     private async void OnTimerElapsedAsync(object? _, ElapsedEventArgs __)
@@ -38,6 +38,6 @@ public class VibrationTelemetryService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.CompletedTask;
     }
 }

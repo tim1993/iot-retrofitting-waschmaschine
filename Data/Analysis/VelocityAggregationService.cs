@@ -6,13 +6,14 @@ using Microsoft.Extensions.Options;
 using WashingIot.Configuration;
 using System.Runtime.Caching;
 using Timer = System.Timers.Timer;
+using WashingIot.Data.Persistence;
 
 namespace WashingIot.Data;
 
 public class VelocityAggregationService : IHostedService
 {
     private readonly Adx1345SensorDataCollector _sensorDataCollector;
-
+    private readonly CsvPersistenceService _persistenceService;
     private readonly MemoryCache _cache = MemoryCache.Default;
     private readonly ILogger<VelocityAggregationService> _logger;
     private Timer? _timer;
@@ -23,9 +24,10 @@ public class VelocityAggregationService : IHostedService
 
     public event AggregatedVelocityHistoryUpdatedHandler? AggregatedVelocityHistoryUpdated;
 
-    public VelocityAggregationService(Adx1345SensorDataCollector sensorDataCollector, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<VelocityAggregationService> logger)
+    public VelocityAggregationService(Adx1345SensorDataCollector sensorDataCollector, CsvPersistenceService persistenceService, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<VelocityAggregationService> logger)
     {
         _sensorDataCollector = sensorDataCollector;
+        _persistenceService = persistenceService;
         _logger = logger;
         _config = options.Value;
     }
@@ -67,7 +69,8 @@ public class VelocityAggregationService : IHostedService
         var avgVz = velocity.Average(x => Math.Abs(x.Vz));
 
         var combinedVelocity = velocity.Average(x => Math.Abs(x.Vx) + Math.Abs(x.Vy) + Math.Abs(x.Vz));
-
         _cache.Add(new CacheItem(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(), (DateTimeOffset.Now, combinedVelocity)), new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.Now + AnalysisConstants.ObservationPeriod });
+
+        _persistenceService.Write(new AggregatedVelocityRecord(DateTimeOffset.Now, avgVx, avgVy, avgVz, combinedVelocity));
     }
 }

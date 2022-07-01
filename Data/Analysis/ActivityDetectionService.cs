@@ -36,7 +36,7 @@ public class ActivityDetectionService : IHostedService
 
             if (procentualDifference > 0.1)
             {
-                logger.LogInformation("Detected activity. ComparisionVelocity: {comparisonVelocity}; ", comparisonVelocity, avgReferenceVelocity);
+                logger.LogInformation("Detected activity. ComparisionVelocity: {comparisonVelocity}; ObservationVelocity: {avgReferenceVelocity}", comparisonVelocity, avgReferenceVelocity);
             }
         }
     }
