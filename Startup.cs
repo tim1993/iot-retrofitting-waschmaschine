@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using WashingIot.Configuration;
+using WashingIot.Connectivity;
 using WashingIot.Data;
 using WashingIot.Data.Persistence;
 using WashingIot.Services;
@@ -33,7 +34,7 @@ public static class Startup
         services.AddSingleton<SensorReaderService>().AddHostedService(sp => sp.GetRequiredService<SensorReaderService>());
         services.AddSingleton<VelocityAggregationService>().AddHostedService(sp => sp.GetRequiredService<VelocityAggregationService>());
         services.AddSingleton<ActivityDetectionService>().AddHostedService(sp => sp.GetRequiredService<ActivityDetectionService>());
-
+        services.AddHostedService<VibrationTelemetryService>();
         services.AddSingleton<DeviceClient>((sp) => DeviceClient.CreateFromConnectionString(sp.GetRequiredService<IOptionsSnapshot<ConnectionConfiguration>>().Value.IoTHubConnectionString));
 
         services.Configure<VibrationMonitoringConfiguration>(context.Configuration.GetSection(nameof(VibrationMonitoringConfiguration)));
