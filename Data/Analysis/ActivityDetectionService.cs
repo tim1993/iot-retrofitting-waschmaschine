@@ -42,7 +42,7 @@ public class ActivityDetectionService : IHostedService
             var monitoringValues = data.Where(d => _lastDetectionRun != null ? d.Item1 > _lastDetectionRun : true).TakeLast(10);
             if (monitoringValues.Count() == 10)
             {
-                var hitList = monitoringValues.Select(mv => HasExceededReferenceThresholdBy(60, referenceVelocityThreshold.Value, mv.Item2));
+                var hitList = monitoringValues.Select(mv => HasExceededReferenceThresholdBy(80, referenceVelocityThreshold.Value, mv.Item2));
                 var hitCount = hitList.Where(hit => hit).Count();
                 var hitPercent = (double)hitCount / (double)hitList.Count();
 

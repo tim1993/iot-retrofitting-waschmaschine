@@ -1,3 +1,6 @@
 namespace WashingIot.Configuration;
 
-public record ConnectionConfiguration(string IoTHubConnectionString);
+public class ConnectionConfiguration
+{
+    public string IoTHubConnectionString { get; set; } = null!;
+}
