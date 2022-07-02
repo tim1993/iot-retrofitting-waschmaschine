@@ -2,7 +2,7 @@ using CsvHelper.Configuration;
 
 namespace WashingIot.Data.Persistence;
 
-public record ActivityDetectionRecord(DateTimeOffset Ts, float comparisonPeriodVelocity, float detectionPeriodVelocity, float procentualDifference);
+public record ActivityDetectionRecord(DateTimeOffset Ts, double comparisonPeriodVelocity, double detectionPeriodVelocity, double procentualDifference);
 
 public class ActivityDetectionRecordMap : ClassMap<ActivityDetectionRecord>
 {

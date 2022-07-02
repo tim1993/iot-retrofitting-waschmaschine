@@ -27,7 +27,7 @@ public static class Startup
             {
                 ClockFrequency = Adxl345.SpiClockFrequency,
                 Mode = Adxl345.SpiMode
-            }), GravityRange.Range02));
+            }), GravityRange.Range08));
             services.AddSingleton<ISensorDataSource<Adxl345Reading>, Adxl345DataSource>();
         }
         services.AddSingleton<SensorReaderService>().AddHostedService(sp => sp.GetRequiredService<SensorReaderService>());

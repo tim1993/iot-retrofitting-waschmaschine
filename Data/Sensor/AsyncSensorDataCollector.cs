@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using WashingIot.Data.Persistence;
 
 namespace WashingIot.Data;
 
@@ -50,9 +49,9 @@ public class AsyncSensorDataCollector<T>
                 try
                 {
                     var measurement = await _source.GetMeasurmentAsync();
-                    _logger?.LogInformation("Received measurement: {measurement}", measurement?.ToString());
+                    // _logger?.LogInformation("Received measurement: {measurement}", measurement?.ToString());
                     LogReading(measurement);
-                    _data.Add(new Reading<T>(DateTime.UtcNow, measurement));
+                    _data.Add(new Reading<T>(DateTimeOffset.UtcNow, measurement));
                 }
                 catch (Exception e)
                 {
@@ -66,7 +65,7 @@ public class AsyncSensorDataCollector<T>
         });
     }
 
-    private IEnumerable<Reading<T>> GetEntriesForCleanup() => _data.Where(x => DateTime.UtcNow - x.Timestamp > _maxAge).ToArray();
+    private IEnumerable<Reading<T>> GetEntriesForCleanup() => _data.Where(x => DateTimeOffset.UtcNow - x.Timestamp > _maxAge).ToArray();
 
     private void HandleCleanUp()
     {

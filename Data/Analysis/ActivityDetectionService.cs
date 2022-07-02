@@ -25,33 +25,49 @@ public class ActivityDetectionService : IHostedService
         return Task.CompletedTask;
     }
 
-    private void VelocityUpdatedHandler(IEnumerable<(DateTimeOffset, float)> data)
+    private void VelocityUpdatedHandler(IEnumerable<(DateTimeOffset, double)> data)
     {
-        logger.LogInformation("ActivityDetection cycle started.");
-
-        var youngestTs = data.Min(s => s.Item1);
-        var observationTreshold = youngestTs + AnalysisConstants.ActivityDetectionComparisionBase;
-        var avgReferenceVelocity = data.Where(s => s.Item1 < observationTreshold).Average(x => x.Item2);
-        var velocityPoints = data.Where(s => s.Item1 > observationTreshold);
-
-        if (velocityPoints.Any())
+        if (data.Any())
         {
-            var comparisonVelocity = velocityPoints.Average(x => x.Item2);
-            var procentualDifference = 1 - Math.Abs(comparisonVelocity) / Math.Abs(avgReferenceVelocity);
+            var newestTimestamp = data.Max(s => s.Item1);
+            var observationTreshold = newestTimestamp - AnalysisConstants.ActivityDetectionPeriod;
+            var samples = data.OrderBy(s => s.Item1);
 
-            logger.LogInformation("ReferencePeriodAvgVelocity: {avgReferenceVelocity}, DetectionPeroidAvgVelocity: {comparisonVelocity}, Procentual Change: {procentualDifference}", avgReferenceVelocity, comparisonVelocity, procentualDifference * 100);
+            var bucketSize = 5;
+            var currentPeriod = samples.TakeLast(bucketSize);
+            var referencePeriod = samples.SkipLast(bucketSize).TakeLast(bucketSize);
 
-            persistenceService.Write(new ActivityDetectionRecord(DateTimeOffset.UtcNow, avgReferenceVelocity, comparisonVelocity, procentualDifference));
-
-            if (procentualDifference > 0.1)
+            var currentBucketLength = currentPeriod.Count();
+            var refrenceBucketLength = referencePeriod.Count();
+            if (currentBucketLength != refrenceBucketLength)
             {
-                logger.LogInformation("Detected activity. ComparisionVelocity: {comparisonVelocity}; ObservationVelocity: {avgReferenceVelocity}", comparisonVelocity, avgReferenceVelocity);
+                // not enough samples
+                logger.LogInformation(
+                    "Activity detection still calibrating. Refrence {reference} != Current {current}.",
+                    refrenceBucketLength, currentBucketLength);
+                return;
+            }
+
+
+
+            if (currentPeriod.Any() && referencePeriod.Any())
+            {
+                var refrenceAvg = referencePeriod.Average(x => x.Item2);
+                var currentAvg = currentPeriod.Average(x => x.Item2);
+
+                var procentualDifference = (Math.Abs(currentAvg) - Math.Abs(refrenceAvg)) / Math.Abs(refrenceAvg);
+
+                logger.LogInformation("ReferencePeriodAvgVelocity: {avgReferenceVelocity}, DetectionPeroidAvgVelocity: {comparisonVelocity}, Procentual Change: {procentualDifference}", refrenceAvg, currentAvg, procentualDifference * 100);
+
+                persistenceService.Write(new ActivityDetectionRecord(DateTimeOffset.UtcNow, refrenceAvg, currentAvg, procentualDifference));
+
+                if (procentualDifference > 10)
+                {
+                    logger.LogInformation("Detected activity. ComparisionVelocity: {comparisonVelocity}; ObservationVelocity: {avgReferenceVelocity}", currentAvg, refrenceAvg);
+                }
             }
         }
-        else
-        {
-            logger.LogInformation("There are no current points. Need to collect more data.");
-        }
+
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

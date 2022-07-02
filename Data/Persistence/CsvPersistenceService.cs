@@ -9,6 +9,7 @@ public class CsvPersistenceService
     private CsvWriter _aggregatedVelocityWriter;
     private CsvWriter _activityWriter;
 
+    private object _lock = new object();
     public CsvPersistenceService()
     {
         _accelerationWriter = CreateAccelerationWriter();
@@ -28,9 +29,12 @@ public class CsvPersistenceService
 
     private void WriteInternal<T>(CsvWriter writer, T record)
     {
-        writer.WriteRecord(record);
-        writer.NextRecord();
-        writer.Flush();
+        lock (_lock)
+        {
+            writer.WriteRecord(record);
+            writer.NextRecord();
+            writer.Flush();
+        }
     }
 
     private CsvWriter CreateAccelerationWriter()
