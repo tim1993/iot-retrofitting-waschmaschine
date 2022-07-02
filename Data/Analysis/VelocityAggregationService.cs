@@ -61,7 +61,7 @@ public class VelocityAggregationService : IHostedService
 
     private void CalculateAggregatedVelocity()
     {
-        _logger.LogInformation("Analyzing entries of last interval.");
+        _logger.LogTrace("Analyzing entries of last interval.");
         var readings = _sensorDataCollector.Readings.Where(r => r.Timestamp > DateTimeOffset.UtcNow - Interval).OrderBy(x => x.Timestamp).ToList();
         var velocity = readings.Zip(readings.Skip(1)).Select(x => new { Vx = x.First.Value.X - x.Second.Value.X, Vy = x.First.Value.Y - x.Second.Value.Y, Vz = x.First.Value.Z - x.Second.Value.Z });
         if (velocity.Any())
@@ -74,7 +74,7 @@ public class VelocityAggregationService : IHostedService
 
             var avgVar = (new[] { varVx, varVy, varVz }).Average();
 
-            _logger.LogInformation("VarX: {varX}, VarY: {varY}, VarZ: {varZ}, avgVar: {avgV}", varVx, varVy, varVz, avgVar);
+            _logger.LogTrace("VarX: {varX}, VarY: {varY}, VarZ: {varZ}, avgVar: {avgV}", varVx, varVy, varVz, avgVar);
             _cache.Add(
                     new CacheItem(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
                     (DateTimeOffset.Now, avgVar)),

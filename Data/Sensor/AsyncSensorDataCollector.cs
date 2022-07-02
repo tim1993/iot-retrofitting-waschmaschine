@@ -72,8 +72,6 @@ public class AsyncSensorDataCollector<T>
         var cleanupCandidates = GetEntriesForCleanup();
         if (cleanupCandidates.Any())
         {
-            _logger?.LogInformation("Cleaning {count} from SensorDataCollector", cleanupCandidates.Count());
-
             foreach (var candidate in cleanupCandidates)
             {
                 _data.Remove(candidate);

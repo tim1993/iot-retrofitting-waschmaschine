@@ -8,4 +8,4 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
         .ConfigureServices((hostContext, services) => Startup.ConfigureServices(services, hostContext))
         .ConfigureAppConfiguration(config => config.AddJsonFile("appsettings.json").AddJsonFile("appsettings.dev.json", true))
-        .ConfigureLogging((_, logging) => logging.ClearProviders().AddConsole());
+        .ConfigureLogging((_, logging) => logging.SetMinimumLevel(LogLevel.Information).ClearProviders().AddConsole());

@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using System.Timers;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Extensions.Hosting;
@@ -8,36 +10,36 @@ namespace WashingIot.Connectivity;
 
 public class VibrationTelemetryService : IHostedService
 {
-    private readonly static TimeSpan Delay = TimeSpan.FromSeconds(30);
-    private readonly VelocityAggregationService _analysisService;
-    private Timer? _timer;
-    public VibrationTelemetryService(DeviceClient client, VelocityAggregationService analysisService)
+    private readonly DeviceClient deviceClient;
+    private readonly ActivityDetectionService activityDetectionService;
+
+    public VibrationTelemetryService(DeviceClient deviceClient, ActivityDetectionService activityDetectionService)
     {
-        _analysisService = analysisService;
+        this.deviceClient = deviceClient;
+        this.activityDetectionService = activityDetectionService;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _timer?.Dispose();
-        _timer = new Timer(Delay.TotalMilliseconds);
-        _timer.Elapsed += OnTimerElapsedAsync;
-        _timer.Enabled = true;
+        activityDetectionService.ActivityStateUpdated += HandleActivityStateUpdated;
 
         return Task.CompletedTask;
-    }
-
-    private Task OnElapsedAsync()
-    {
-        return Task.CompletedTask;
-    }
-
-    private async void OnTimerElapsedAsync(object? _, ElapsedEventArgs __)
-    {
-        await OnElapsedAsync();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
+        activityDetectionService.ActivityStateUpdated -= HandleActivityStateUpdated;
         return Task.CompletedTask;
     }
+
+    private async void HandleActivityStateUpdated(bool activityDetected)
+    {
+        var message = new Message(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new ActivityTelemetryMessage(activityDetected),
+                                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })));
+
+        await deviceClient.SendEventAsync(message);
+    }
+
+
+    private record ActivityTelemetryMessage(bool Active);
 }

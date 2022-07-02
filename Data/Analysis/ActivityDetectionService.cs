@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using WashingIot.Configuration;
 using WashingIot.Data.Persistence;
 
 namespace WashingIot.Data;
@@ -10,6 +9,16 @@ public class ActivityDetectionService : IHostedService
     private readonly VelocityAggregationService velocityAggregationService;
     private readonly CsvPersistenceService persistenceService;
     private readonly ILogger<ActivityDetectionService> logger;
+
+
+
+    private DateTimeOffset? _lastDetectionRun;
+
+    private double? referenceVelocityThreshold;
+
+    public delegate void ActivityStateUpdatedHandler(bool activityDetected);
+
+    public event ActivityStateUpdatedHandler? ActivityStateUpdated;
 
     public ActivityDetectionService(VelocityAggregationService velocityAggregationService, CsvPersistenceService persistenceService, ILogger<ActivityDetectionService> logger)
     {
@@ -27,47 +36,50 @@ public class ActivityDetectionService : IHostedService
 
     private void VelocityUpdatedHandler(IEnumerable<(DateTimeOffset, double)> data)
     {
-        if (data.Any())
+        TryCalculateInitialThreshold(data.Select(d => d.Item2));
+        if (referenceVelocityThreshold is not null)
         {
-            var newestTimestamp = data.Max(s => s.Item1);
-            var observationTreshold = newestTimestamp - AnalysisConstants.ActivityDetectionPeriod;
-            var samples = data.OrderBy(s => s.Item1);
-
-            var bucketSize = 5;
-            var currentPeriod = samples.TakeLast(bucketSize);
-            var referencePeriod = samples.SkipLast(bucketSize).TakeLast(bucketSize);
-
-            var currentBucketLength = currentPeriod.Count();
-            var refrenceBucketLength = referencePeriod.Count();
-            if (currentBucketLength != refrenceBucketLength)
+            var monitoringValues = data.Where(d => _lastDetectionRun != null ? d.Item1 > _lastDetectionRun : true).TakeLast(10);
+            if (monitoringValues.Count() == 10)
             {
-                // not enough samples
-                logger.LogInformation(
-                    "Activity detection still calibrating. Refrence {reference} != Current {current}.",
-                    refrenceBucketLength, currentBucketLength);
-                return;
-            }
+                var hitList = monitoringValues.Select(mv => HasExceededReferenceThresholdBy(60, referenceVelocityThreshold.Value, mv.Item2));
+                var hitCount = hitList.Where(hit => hit).Count();
+                var hitPercent = (double)hitCount / (double)hitList.Count();
 
+                logger.LogInformation("Got following statistics: Hits: {hitcount}, HitPercentage: {hitPercentage}", hitCount, hitPercent);
 
-
-            if (currentPeriod.Any() && referencePeriod.Any())
-            {
-                var refrenceAvg = referencePeriod.Average(x => x.Item2);
-                var currentAvg = currentPeriod.Average(x => x.Item2);
-
-                var procentualDifference = (Math.Abs(currentAvg) - Math.Abs(refrenceAvg)) / Math.Abs(refrenceAvg);
-
-                logger.LogInformation("ReferencePeriodAvgVelocity: {avgReferenceVelocity}, DetectionPeroidAvgVelocity: {comparisonVelocity}, Procentual Change: {procentualDifference}", refrenceAvg, currentAvg, procentualDifference * 100);
-
-                persistenceService.Write(new ActivityDetectionRecord(DateTimeOffset.UtcNow, refrenceAvg, currentAvg, procentualDifference));
-
-                if (procentualDifference > 10)
+                if (hitPercent > 0.7)
                 {
-                    logger.LogInformation("Detected activity. ComparisionVelocity: {comparisonVelocity}; ObservationVelocity: {avgReferenceVelocity}", currentAvg, refrenceAvg);
+                    logger.LogInformation("Activity start detected.");
+                    ActivityStateUpdated?.Invoke(true);
                 }
+
+                if (hitPercent < 0.3)
+                {
+                    logger.LogInformation("Activity stopp detected.");
+                    ActivityStateUpdated?.Invoke(false);
+                }
+
+                _lastDetectionRun = DateTimeOffset.UtcNow;
             }
         }
+    }
 
+    private bool HasExceededReferenceThresholdBy(int percent, double reference, double value)
+        => (value - reference) / Math.Abs(reference) * 100 > percent;
+
+    private bool TryCalculateInitialThreshold(IEnumerable<double> avgVelocityStdDev)
+    {
+        if (avgVelocityStdDev.Count() > 5
+            && referenceVelocityThreshold is null)
+        {
+            referenceVelocityThreshold = avgVelocityStdDev.Average();
+            logger.LogInformation("Set ReferenceVelocityThreshold to {reference}", referenceVelocityThreshold);
+
+            return true;
+        }
+
+        return false;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
