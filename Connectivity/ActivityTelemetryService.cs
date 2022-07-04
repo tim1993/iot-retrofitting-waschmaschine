@@ -49,11 +49,19 @@ public class ActivityTelemetryService : IHostedService
 
     private async Task SendStatus(bool status)
     {
-        logger.LogInformation("Sending new activity status: {status}", activityDetected);
-        var message = new Message(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new ActivityTelemetryMessage(status),
-                            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })));
+        try
+        {
+            logger.LogInformation("Sending new activity status: {status}", activityDetected);
+            var message = new Message(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new ActivityTelemetryMessage(status),
+                                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })));
 
-        await deviceClient.SendEventAsync(message);
+            await deviceClient.SendEventAsync(message);
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Could not send status to cloud.");
+        }
+
     }
 
 

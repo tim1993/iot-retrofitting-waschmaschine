@@ -18,7 +18,7 @@ public static class ConnectivitySetupExtensions
             return InfluxDB.Client.InfluxDBClientFactory.Create(options.InfluxDbHost, options.InfluxDbToken);
         });
 
-        services.AddSingleton<CsvPersistenceService>();
+        services.AddSingleton<PersistenceService>();
     }
 
     public static void AddAzIoTCentralTelemetry(this IServiceCollection services)

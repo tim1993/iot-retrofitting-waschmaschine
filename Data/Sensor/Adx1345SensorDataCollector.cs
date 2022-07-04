@@ -7,9 +7,9 @@ namespace WashingIot.Data;
 
 public class Adx1345SensorDataCollector : AsyncSensorDataCollector<Adxl345Reading>
 {
-    private readonly CsvPersistenceService _persistenceService;
+    private readonly PersistenceService _persistenceService;
 
-    public Adx1345SensorDataCollector(ISensorDataSource<Adxl345Reading> source, CsvPersistenceService persistenceService, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<Adx1345SensorDataCollector> logger)
+    public Adx1345SensorDataCollector(ISensorDataSource<Adxl345Reading> source, PersistenceService persistenceService, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<Adx1345SensorDataCollector> logger)
         : base(AnalysisConstants.SamplingInterval, AnalysisConstants.ObservationPeriod, source, logger)
     {
         _persistenceService = persistenceService;

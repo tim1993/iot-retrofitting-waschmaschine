@@ -14,7 +14,7 @@ public class VelocityAggregationService : IHostedService
 {
     private static readonly TimeSpan Interval = AnalysisConstants.VarianceAggregationInterval;
     private readonly Adx1345SensorDataCollector _sensorDataCollector;
-    private readonly CsvPersistenceService _persistenceService;
+    private readonly PersistenceService _persistenceService;
     private readonly MemoryCache _cache = MemoryCache.Default;
     private readonly ILogger<VelocityAggregationService> _logger;
     private Timer? _timer;
@@ -25,7 +25,7 @@ public class VelocityAggregationService : IHostedService
 
     public event AggregatedVelocityHistoryUpdatedHandler? AggregatedVelocityHistoryUpdated;
 
-    public VelocityAggregationService(Adx1345SensorDataCollector sensorDataCollector, CsvPersistenceService persistenceService, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<VelocityAggregationService> logger)
+    public VelocityAggregationService(Adx1345SensorDataCollector sensorDataCollector, PersistenceService persistenceService, IOptionsSnapshot<VibrationMonitoringConfiguration> options, ILogger<VelocityAggregationService> logger)
     {
         _sensorDataCollector = sensorDataCollector;
         _persistenceService = persistenceService;

@@ -1,24 +1,26 @@
-using System.Globalization;
-using CsvHelper;
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using WashingIot.Configuration;
 
 namespace WashingIot.Data.Persistence;
 
-public class CsvPersistenceService
+public class PersistenceService
 {
     private object _lock = new object();
 
     private InfluxDBClient _influxClient;
     private readonly IOptionsSnapshot<ConnectionConfiguration> _influxSettings;
 
-    public CsvPersistenceService(IOptionsSnapshot<ConnectionConfiguration> influxSettings, InfluxDBClient influxClient)
+    private readonly ILogger _logger;
+
+    public PersistenceService(IOptionsSnapshot<ConnectionConfiguration> influxSettings, InfluxDBClient influxClient, ILogger<PersistenceService> logger)
     {
         _influxSettings = influxSettings;
         _influxClient = influxClient;
+        _logger = logger;
     }
 
     public void Write(AccelerationRecord record)
@@ -52,8 +54,16 @@ public class CsvPersistenceService
 
     private void WriteInternal(PointData p)
     {
-        using var influxWriteApi = _influxClient.GetWriteApi();
-        influxWriteApi.WritePoint(p,
-                _influxSettings.Value.InfluxDbBucket, _influxSettings.Value.InfluxDbOrg);
+        try
+        {
+            using var influxWriteApi = _influxClient.GetWriteApi();
+            influxWriteApi.WritePoint(p,
+                    _influxSettings.Value.InfluxDbBucket, _influxSettings.Value.InfluxDbOrg);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Could not write to influxdb");
+        }
+
     }
 }
