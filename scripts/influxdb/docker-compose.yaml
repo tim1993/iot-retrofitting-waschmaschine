@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  influx:
+    image:  influxdb:2.0
+    ports:
+      - 8086:8086
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=medialesson
+      - DOCKER_INFLUXDB_INIT_PASSWORD=medialesson
+      - DOCKER_INFLUXDB_INIT_ORG=medialesson
+      - DOCKER_INFLUXDB_INIT_BUCKET=washingmachine
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=demo
+
