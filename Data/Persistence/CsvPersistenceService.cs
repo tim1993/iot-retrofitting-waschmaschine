@@ -1,77 +1,59 @@
 using System.Globalization;
 using CsvHelper;
+using InfluxDB.Client;
+using InfluxDB.Client.Api.Domain;
+using InfluxDB.Client.Writes;
+using Microsoft.Extensions.Options;
+using WashingIot.Configuration;
 
 namespace WashingIot.Data.Persistence;
 
 public class CsvPersistenceService
 {
-    private CsvWriter _accelerationWriter;
-    private CsvWriter _aggregatedVelocityWriter;
-    private CsvWriter _activityWriter;
-
     private object _lock = new object();
-    public CsvPersistenceService()
+
+    private InfluxDBClient _influxClient;
+    private readonly IOptionsSnapshot<ConnectionConfiguration> _influxSettings;
+
+    public CsvPersistenceService(IOptionsSnapshot<ConnectionConfiguration> influxSettings, InfluxDBClient influxClient)
     {
-        _accelerationWriter = CreateAccelerationWriter();
-        _aggregatedVelocityWriter = CreateAggregatedVelocityWriter();
-        _activityWriter = CreateActivityDetectionWriter();
+        _influxSettings = influxSettings;
+        _influxClient = influxClient;
     }
 
     public void Write(AccelerationRecord record)
-        => WriteInternal(_accelerationWriter, record);
+    {
+
+        var measurement = PointData.Measurement("vibration")
+                            .Field("X", record.X).Field("Y", record.Y)
+                            .Field("Z", record.Z).Timestamp(record.Ts, WritePrecision.Ms);
+
+        WriteInternal(measurement);
+    }
 
 
     public void Write(AggregatedVelocityRecord record)
-        => WriteInternal(_aggregatedVelocityWriter, record);
-
-    public void Write(ActivityDetectionRecord record)
-        => WriteInternal(_activityWriter, record);
-
-    private void WriteInternal<T>(CsvWriter writer, T record)
     {
-        lock (_lock)
-        {
-            writer.WriteRecord(record);
-            writer.NextRecord();
-            writer.Flush();
-        }
+        var measurement = PointData.Measurement("velocity_variance").Field("Xvar", record.VarX).Field("Yvar", record.VarY)
+                            .Field("Zvar", record.VarZ).Field("aggregatedVar", record.AggregatedVar)
+                            .Timestamp(record.Ts, WritePrecision.Ms);
+
+        WriteInternal(measurement);
     }
 
-    private CsvWriter CreateAccelerationWriter()
+    public void Write(VelocityData record)
     {
-        var writer = CreateWriter("acceleration.csv");
-        writer.Context.RegisterClassMap<AccelerationRecordMap>();
-        writer.WriteHeader<AccelerationRecord>();
-        writer.NextRecord();
+        var measurement = PointData.Measurement("velocity").Field("vX", record.vX)
+                    .Field("vY", record.vY).Field("vZ", record.vZ).Timestamp(record.Ts, WritePrecision.Ms);
 
-        return writer;
+        WriteInternal(measurement);
     }
 
-    private CsvWriter CreateAggregatedVelocityWriter()
+
+    private void WriteInternal(PointData p)
     {
-        var writer = CreateWriter("velocity.csv");
-        writer.Context.RegisterClassMap<AggregatedVelocityRecordMap>();
-        writer.WriteHeader<AggregatedVelocityRecord>();
-        writer.NextRecord();
-
-        return writer;
-    }
-
-    private CsvWriter CreateActivityDetectionWriter()
-    {
-        var writer = CreateWriter("activity.csv");
-        writer.Context.RegisterClassMap<ActivityDetectionRecordMap>();
-        writer.WriteHeader<ActivityDetectionRecord>();
-        writer.NextRecord();
-
-        return writer;
-    }
-
-    private CsvWriter CreateWriter(string file)
-    {
-        var streamWriter = new StreamWriter(File.Open($"{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}_{file}", FileMode.Create));
-        var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture);
-
-        return csvWriter;
+        using var influxWriteApi = _influxClient.GetWriteApi();
+        influxWriteApi.WritePoint(p,
+                _influxSettings.Value.InfluxDbBucket, _influxSettings.Value.InfluxDbOrg);
     }
 }

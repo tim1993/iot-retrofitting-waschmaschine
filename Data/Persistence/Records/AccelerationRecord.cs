@@ -1,6 +1,8 @@
 using CsvHelper.Configuration;
+using InfluxDB.Client.Core;
 
 namespace WashingIot.Data.Persistence;
+
 
 public record AccelerationRecord(DateTimeOffset Ts, float X, float Y, float Z);
 

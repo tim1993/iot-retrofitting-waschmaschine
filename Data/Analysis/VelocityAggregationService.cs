@@ -75,6 +75,7 @@ public class VelocityAggregationService : IHostedService
             var avgVar = (new[] { varVx, varVy, varVz }).Average();
 
             _logger.LogTrace("VarX: {varX}, VarY: {varY}, VarZ: {varZ}, avgVar: {avgV}", varVx, varVy, varVz, avgVar);
+
             _cache.Add(
                     new CacheItem(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
                     (DateTimeOffset.Now, avgVar)),
