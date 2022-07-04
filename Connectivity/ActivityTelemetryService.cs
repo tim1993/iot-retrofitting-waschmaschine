@@ -10,40 +10,40 @@ namespace WashingIot.Connectivity;
 
 public class ActivityTelemetryService : IHostedService
 {
-    private readonly DeviceClient deviceClient;
-    private readonly ActivityDetectionService activityDetectionService;
-    private readonly ILogger<ActivityTelemetryService> logger;
-    private bool activityDetected = false;
+    private readonly DeviceClient _deviceClient;
+    private readonly ActivityDetectionService _activityDetectionService;
+    private readonly ILogger<ActivityTelemetryService> _logger;
+    private bool _activityDetected = false;
     public ActivityTelemetryService(DeviceClient deviceClient, ActivityDetectionService activityDetectionService, ILogger<ActivityTelemetryService> logger)
     {
-        this.deviceClient = deviceClient;
-        this.activityDetectionService = activityDetectionService;
-        this.logger = logger;
+        _deviceClient = deviceClient;
+        _activityDetectionService = activityDetectionService;
+        _logger = logger;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        activityDetectionService.ActivityStateUpdated += HandleActivityStateUpdated;
+        _activityDetectionService.ActivityStateUpdated += HandleActivityStateUpdated;
 
         try
         {
-            await SendStatus(activityDetected);
+            await SendStatus(_activityDetected);
         }
         catch { }
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        activityDetectionService.ActivityStateUpdated -= HandleActivityStateUpdated;
+        _activityDetectionService.ActivityStateUpdated -= HandleActivityStateUpdated;
         return Task.CompletedTask;
     }
 
     private async void HandleActivityStateUpdated(bool activityDetected)
     {
-        if (this.activityDetected != activityDetected)
+        if (this._activityDetected != activityDetected)
         {
             await SendStatus(activityDetected);
-            this.activityDetected = activityDetected;
+            this._activityDetected = activityDetected;
         }
     }
 
@@ -51,15 +51,15 @@ public class ActivityTelemetryService : IHostedService
     {
         try
         {
-            logger.LogInformation("Sending new activity status: {status}", activityDetected);
+            _logger.LogInformation("Sending new activity status: {status}", status);
             var message = new Message(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new ActivityTelemetryMessage(status),
                                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })));
 
-            await deviceClient.SendEventAsync(message);
+            await _deviceClient.SendEventAsync(message);
         }
         catch (Exception e)
         {
-            logger.LogError(e, "Could not send status to cloud.");
+            _logger.LogError(e, "Could not send status to cloud.");
         }
 
     }
