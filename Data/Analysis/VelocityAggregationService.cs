@@ -70,8 +70,6 @@ public class VelocityAggregationService : IHostedService
             var varVy = Variance(velocity.Select(v => Math.Abs((double)v.Vy)));
             var varVz = Variance(velocity.Select(v => Math.Abs((double)v.Vz)));
 
-            var debug = new { vXMax = velocity.Max(x => x.Vx), vYMax = velocity.Max(x => x.Vy), vZMax = velocity.Max(x => x.Vz) };
-
             var avgVar = (new[] { varVx, varVy, varVz }).Average();
 
             _logger.LogTrace("VarX: {varX}, VarY: {varY}, VarZ: {varZ}, avgVar: {avgV}", varVx, varVy, varVz, avgVar);
